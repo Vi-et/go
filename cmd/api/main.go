@@ -42,6 +42,8 @@ func main() {
 	mux := http.NewServeMux()
 	// 2. Đăng ký endpoint healthcheck
 	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
+	// Đăng ký endpoint createMovieHandler
+	mux.HandleFunc("/v1/movies", app.createMovieHandler)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
