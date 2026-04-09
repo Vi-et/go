@@ -8,6 +8,7 @@ import (
 // Tạo một lỗi tuỳ chỉnh ErrRecordNotFound
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("edit conflict")
 )
 
 // Struct Models chứa MovieModel (và các model khác sau này)
