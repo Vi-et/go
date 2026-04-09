@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -30,9 +31,53 @@ func (m MovieModel) Insert(movie *Movie) error {
 	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
-// Hàm dùng để đọc lấy dữ liệu (Read)
+// Bạn nhớ thêm "errors" vào khối import ở đầu file nhé!
+
+// Hàm dùng để lấy dữ liệu (Read/Get)
 func (m MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+	// ID của PostgreSQL kiểu bigserial bắt đầu từ 1.
+	// Nếu user truyền vào id < 1 thì ta có thể trả về lỗi Not Found luôn đỡ tốn công gọi DB.
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	// 1. Viết câu SQL SELECT
+	query := `
+		SELECT id, created_at, title, year, runtime, genres, version 
+		FROM movies 
+		WHERE id = $1`
+
+	var movie Movie
+
+	// Mách nhỏ: Giống như lúc Insert bạn tự thêm Context timeout cho xịn,
+	// Ở đây mình cũng nên làm vậy thay vì gọi m.DB.QueryRow() chay như sách!
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// 2. Chạy Query lấy 1 dòng và Scan vào struct
+	// LƯU Ý: Vẫn phải dùng pq.Array(&movie.Genres) để dịch cấu trúc Array sang Go slice
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	)
+
+	// 3. Xử lý lỗi nếu không tìm thấy phim
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			// Bắt lỗi không tìm thấy dòng nào của package sql và chuyển thành lỗi riêng của app
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &movie, nil
 }
 
 // Hàm dùng để cập nhật (Update)

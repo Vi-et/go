@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -52,6 +53,37 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
 	// Trả về kết quả JSON với HTTP status code 201 Created
 	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+// Hãy import "errors" vào file này giống file trên nha
+
+func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// 1. Gọi hàm Get từ Movies model
+	movie, err := app.models.Movies.Get(id)
+
+	// 2. Xử lý lỗi
+	if err != nil {
+		switch {
+		// Nếu là lỗi ErrRecordNotFound ta trả về mã 404 (Hàm notFoundResponse chắc bạn đã viết)
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// 3. Nếu mọi thứ thành công, trả về HTTP Status 200 kèm JSON dữ liệu phim
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
