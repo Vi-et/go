@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter" // <-- Cần để dùng bộ định tuyến httprouter
 )
 
-func (app *application) routes() *httprouter.Router {
+func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
 	// Chuyển đổi các helpers thành http.Handler bằng http.HandlerFunc
@@ -20,5 +20,5 @@ func (app *application) routes() *httprouter.Router {
 	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.showMovieHandler)
 	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", app.updateMovieHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.deleteMovieHandler)
-	return router
+	return app.recoverPanic(router)
 }

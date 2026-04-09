@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	_ "github.com/lib/pq"
 	"greenlight.example.com/internal/data"
+	"greenlight.example.com/internal/jsonlog"
 )
 
 // Khai báo hằng số version của ứng dụng
@@ -32,7 +32,7 @@ type config struct {
 // Struct application sẽ chứa các phần phụ thuộc mà các handler cần dùng.
 type application struct {
 	config config
-	logger *log.Logger
+	logger *jsonlog.Logger
 	models data.Models
 }
 
@@ -80,15 +80,17 @@ func main() {
 	flag.Parse()
 
 	// Khởi tạo logger
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
+	// Xóa:
 
 	// Đảm bảo rằng kết nối sẽ được đóng khi hàm main đóng.
 	defer db.Close()
+	logger.PrintInfo("database connection pool established", nil)
 
 	app := &application{
 		config: cfg,
@@ -103,13 +105,14 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
-
-	// Thay đổi dòng này:
-	logger.Printf("starting %s server on %s", app.config.env, srv.Addr)
+	logger.PrintInfo("starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
 
 	err = srv.ListenAndServe()
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 
 }

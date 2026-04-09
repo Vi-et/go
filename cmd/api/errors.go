@@ -8,7 +8,10 @@ import (
 // logError() là helper dùng để ghi log lỗi. Hiện tại nó chỉ in ra logger,
 // nhưng sau này sẽ được nâng cấp lên structured logging.
 func (app *application) logError(r *http.Request, err error) {
-	app.logger.Println(err)
+	app.logger.PrintError(err, map[string]string{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+	})
 }
 
 // errorResponse() là helper chung để gửi thông báo lỗi dạng JSON.
