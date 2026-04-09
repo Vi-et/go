@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"greenlight.example.com/internal/validator"
 )
 
 // Define một type 'envelope' để việc bọc dữ liệu trở nên tường minh hơn
@@ -101,4 +103,43 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 		return 0, errors.New("invalid id parameter")
 	}
 	return id, nil
+}
+
+// Hàm trợ giúp readString() trả về giá trị kiểu chuỗi từ query string,
+// hoặc giá trị mặc định (defaultValue) nếu tham số không tồn tại.
+func (app *application) readString(qs url.Values, key string, defaultValue string) string {
+	// Lấy giá trị của tham số từ query string.
+	s := qs.Get(key)
+	// Nếu giá trị trả về rỗng, chứng tỏ client không cung cấp, ta trả về mặc định.
+	if s == "" {
+		return defaultValue
+	}
+	return s
+}
+
+// Hàm trợ giúp readCSV() đọc giá trị phân tách bằng dấu phẩy và tách nó thành danh sách các chuỗi (slice).
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+	// Tách chuỗi theo dấu phẩy và trả về dưới dạng mảng (slice).
+	return strings.Split(csv, ",")
+}
+
+// Hàm trợ giúp readInt() lấy giá trị chuỗi từ query string và ép kiểu sang số nguyên int.
+// Đồng thời, nếu không phải số hợp lệ, nó sẽ lưu lỗi đó vào thẳng biến Validator truyền vào (v).
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	// Ép kiểu chuỗi sang kiểu integer.
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		// Thêm thông báo lỗi vào validator instace nếu quá trình ép kiểu thất bại.
+		v.AddError(key, "phải là số nguyên/integer")
+		return defaultValue
+	}
+	return i
 }

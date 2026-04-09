@@ -194,3 +194,55 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+// cmd/api/movies.go
+
+func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	// Cấu trúc tạm để lưu trữ các giá trị query string hợp lệ.
+	var input struct {
+		Title  string
+		Genres []string
+		data.Filters
+	}
+
+	// Khởi tạo một đối tượng Validator.
+	v := validator.New()
+
+	// r.URL.Query() trả về map url.Values, chứa tất cả dữ liệu từ query string
+	qs := r.URL.Query()
+
+	// Áp dụng các helper function để lấy dữ liệu lần lượt (đặt fallback mặc định nếu không có).
+	input.Title = app.readString(qs, "title", "")
+	input.Genres = app.readCSV(qs, "genres", []string{})
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+
+	// Cung cấp danh sách các tham số sắp xếp (sort) hợp lệ đối với phim (movies)
+	input.Filters.SortSafelist = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
+
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Nếu như Validator có bắt được lỗi từ readInt() (hoặc sau này), trả về ngay lỗi cho client.
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Gọi hàm GetAll() vừa tạo để chọc vào Database lấy phim.
+	// Truyền vào các tham số tìm kiếm (Ở chapter này nó chỉ lấy toàn bộ DB)
+	movies, metadata, err := app.models.Movies.GetAll(input.Title, input.Genres, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Đóng gói mảng `movies` vào `envelope` và xuất ra JSON với mã HTTP 200 OK
+	err = app.writeJSON(w, http.StatusOK, envelope{"movies": movies, "metadata": metadata}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}

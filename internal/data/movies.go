@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -173,4 +174,64 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(len(movie.Genres) >= 1, "genres", "must contain at least 1 genre")
 	v.Check(len(movie.Genres) <= 5, "genres", "must not contain more than 5 genres")
 	v.Check(validator.Unique(movie.Genres), "genres", "must not contain duplicate values")
+}
+
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
+	// Sử dụng full-text search cho điều kiện lọc title thay vì so khớp chính xác
+	query := fmt.Sprintf(`
+    SELECT count(*) OVER(), id, created_at, title, year, runtime, genres, version 
+    FROM movies 
+    WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')  
+    AND (genres @> $2 OR $2 = '{}')      
+    ORDER BY %s %s, id ASC 
+    LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+
+	// Khởi tạo context với thời lượng giới hạn timeout là 3 giây để tránh treo DB
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	// Sử dụng QueryContext() để thực thi truy vấn. Kết quả trả về là một sql.Rows
+	// Gom tất cả các placeholder vào một slice để dễ quản lý
+	args := []interface{}{title, pq.Array(genres), filters.limit(), filters.offset()}
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return nil, Metadata{}, err
+	}
+	// ĐẶC BIỆT QUAN TRỌNG: luôn nhớ dùng defer rows.Close() để giải phóng kết nối
+	defer rows.Close()
+	// Khởi tạo một mảng lát (slice) trống để chứa trọn bộ dữ liệu phim
+	totalRecords := 0
+	movies := []*Movie{}
+
+	// Duyệt qua từng dòng dữ liệu bằng rows.Next()
+	for rows.Next() {
+		// Tạo struct Movie trống để hứng dữ liệu
+		var movie Movie
+		// Scan ánh xạ từng cột từ DB vào struct.
+		// Nhớ sử dụng pq.Array(&movie.Genres) để parser mảng text của PostgreSQL.
+		err := rows.Scan(
+			&totalRecords,
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+		// Push struct vừa quét được vào mảng movies
+		movies = append(movies, &movie)
+	}
+	// Khi vòng lặp kết thúc, gọi thêm rows.Err() để đón đầu mọi lỗi phát sinh
+	// trong quá trình vòng lặp duyệt dữ liệu.
+	if err = rows.Err(); err != nil {
+		return nil, Metadata{}, err
+	}
+	// Nếu mọi thứ ổn xuôi, trả về danh sách phim
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	return movies, metadata, nil
 }
