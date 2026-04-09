@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"greenlight.example.com/internal/data"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. Định nghĩa một struct để hứng dữ liệu từ người dùng gửi lên
 	var input struct {
-		Title   string   `json:"title"`
-		Year    int32    `json:"year"`
-		Runtime int32    `json:"runtime"`
-		Genres  []string `json:"genres"`
+		Title   string       `json:"title"`
+		Year    int32        `json:"year"`
+		Runtime data.Runtime `json:"runtime"`
+		Genres  []string     `json:"genres"`
 	}
 
 	// 2. Sử dụng json.NewDecoder để giải mã Body của Request vào struct 'input'
