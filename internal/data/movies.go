@@ -108,6 +108,36 @@ func (m MovieModel) Update(movie *Movie) error {
 
 // Hàm dùng để xóa (Delete)
 func (m MovieModel) Delete(id int64) error {
+	// Trả về lỗi luôn nếu ID nhỏ hơn 1 (không hợp lệ)
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+		DELETE FROM movies 
+		WHERE id = $1`
+
+	// Context Timeout như cũ để phòng hờ kẹt DB
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Thực thi câu query DELETE thông qua ExecContext
+	result, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	// Lấy số lượng bản ghi đã bị xóa
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// Nếu bằng 0 thì tức là phim đó không tồn tại
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
 
