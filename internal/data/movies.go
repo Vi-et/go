@@ -82,7 +82,28 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // Hàm dùng để cập nhật (Update)
 func (m MovieModel) Update(movie *Movie) error {
-	return nil
+	// Lệnh UPDATE SQL: Nhớ cộng version lên 1 mỗi lần thao tác
+	// RETURNING version để lấy ra version number mới nhất sau khi sửa
+	query := `
+		UPDATE movies  
+		SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1 
+		WHERE id = $5 
+		RETURNING version`
+
+	// Chú ý biến $5 map với id của bộ phim
+	args := []interface{}{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Thực thi và Scan ghi ngược giá trị version mới vào struct
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 }
 
 // Hàm dùng để xóa (Delete)
