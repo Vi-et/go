@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"greenlight.example.com/internal/data"
+	"greenlight.example.com/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,8 +20,24 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	// 2. Sử dụng json.NewDecoder để giải mã Body của Request vào struct 'input'
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.logger.Println(err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Copy các giá trị từ input sang struct Movie
+	movie := &data.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
+	}
+
+	// Khởi tạo một Validator mới
+	v := validator.New()
+
+	// Gọi ValidateMovie, nếu không hợp lệ thì ném lỗi 422
+	if data.ValidateMovie(v, movie); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
