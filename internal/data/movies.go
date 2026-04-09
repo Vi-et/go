@@ -1,10 +1,49 @@
 package data
 
 import (
+	"context"
+	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
 	"greenlight.example.com/internal/validator"
 )
+
+type MovieModel struct {
+	DB *sql.DB
+}
+
+// Hàm dùng để thêm mới (Create)
+func (m MovieModel) Insert(movie *Movie) error {
+	// Thêm Context timeout 3 giây bảo vệ server giống Cách 2
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+        INSERT INTO movies (title, year, runtime, genres) 
+        VALUES ($1, $2, $3, $4) 
+        RETURNING id, created_at, version`
+
+	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	// Dùng QueryRowContext thay vì QueryRow giống Cách 1
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+}
+
+// Hàm dùng để đọc lấy dữ liệu (Read)
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Hàm dùng để cập nhật (Update)
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Hàm dùng để xóa (Delete)
+func (m MovieModel) Delete(id int64) error {
+	return nil
+}
 
 type Movie struct {
 	ID        int64     `json:"id"`
