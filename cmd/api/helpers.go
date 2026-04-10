@@ -145,18 +145,22 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 }
 
 // The background() helper chấp nhận bất kỳ hàm ẩn danh (anonymous function) nào làm tham số.
-func (app *application) background(fn func()) { 
+func (app *application) background(fn func()) {
+
+	// 1. Khai báo có 1 Goroutine chuẩn bị được tung vào nền
+	app.wg.Add(1)
 	// Khởi tạo một background goroutine.
-	go func() { 
+	go func() {
+		defer app.wg.Done()
 		// Triển khai Defer để khôi phục mọi panic có thể xảy ra và ghi chép lại lỗi,
 		// ngăn không cho làm sập ứng dụng.
-		defer func() { 
-			if err := recover(); err != nil { 
-				app.logger.PrintError(fmt.Errorf("%s", err), nil) 
-			} 
-		}() 
- 
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+
 		// Thực thi hàm truyền vào (Thực chất là tiến trình Send Email sẽ nằm ở đây).
-		fn() 
+		fn()
 	}()
 }
