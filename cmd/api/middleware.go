@@ -203,24 +203,38 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 // Thêm hàm rẽ nhánh này vào dưới cùng hoặc đâu đó trong file
 func (app *application) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// PHẢI CÓ: Thêm "Vary: Origin" để nhắc cho anh em Cache (Local, CDN)
-		// biết rằng: Dữ liệu tôi gửi ra cho anh có nguy cơ TÙY BIẾN
-		// dựa theo Header 'Origin' lúc anh truyền vào.
-		// Đừng lấy bừa một bản Cache này ném cho thằng không đúng nguồn gốc!
 		w.Header().Add("Vary", "Origin")
 
-		// Trích lấy giá trị header Origin do web browser tự gửi theo
+		// Thêm "Vary: Access-Control-Request-Method" để bọn hệ thống Cache nhận biết
+		// Sự phản hồi từ Server sẽ khác nhau phụ thuộc vào lúc khách hỏi Method nào.
+		w.Header().Add("Vary", "Access-Control-Request-Method")
+
 		origin := r.Header.Get("Origin")
 
-		// Kiểm tra xem Origin được gắn kèm có trống không,
-		// VÀ danh sách Trắng của ta có mở ít nhất 1 Origin nào cho rẽ vào không.
 		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
-			// Lặp qua vòng lặp check.
 			for i := range app.config.cors.trustedOrigins {
 				if origin == app.config.cors.trustedOrigins[i] {
-					// Lắp đúng tên nó vào cửa ra! Mở bát!
 					w.Header().Set("Access-Control-Allow-Origin", origin)
-					break // Thoát sớm nếu đã tìm thấy
+
+					// BẪY LÕNG PREFLIGHT
+					// Kiểm tra xem đây có phải là cái bóng "Dò đường" của trình duyệt không
+					// Dấu hiệu nhận biết: Dùng method OPTIONS, và Xin phép gửi Method kia.
+					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+
+						// Xác nhận bật đèn xanh! Server đồng ý thông qua các phương thức nguy hiểm:
+						// Lưu ý: Các Method cơ bản như GET, POST, HEAD thì mặc định là pass không cần liệt kê.
+						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
+						// Mở cổng cho đính kèm thông tin chứng thực và gói khối JSON:
+						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+						// "Dò đường" thành công! Chỉ vớt gói tin 200 OK trả luôn tại đây
+						// KHÔNG CẦN CHỚM TỚI LOGIC CỦA ROUTER BÊN DƯỚI (next.ServeHTTP).
+						// (Trả 200 OK thay vì 204 No Content là để tương thích ngược một số bản trình duyệt cổ)
+						w.WriteHeader(http.StatusOK)
+						return
+					}
+
+					break // Thoát sớm vòng lặp Origin, thả cho Next đi.
 				}
 			}
 		}
