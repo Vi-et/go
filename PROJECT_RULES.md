@@ -20,5 +20,13 @@ Mọi quy tắc trong file này phải được AI tuân thủ tuyệt đối tr
 - Sử dụng các helper được định nghĩa trong `helpers.go` và `errors.go`.
 - Luôn ưu tiên xử lý lỗi (error handling) một cách chi tiết và trả về JSON.
 
+## 3. Tóm tắt lý thuyết sau mỗi chương (Chapter Summary)
+- **BẮT BUỘC**: Sau khi hướng dẫn xong một chương, phải tạo file tóm tắt lý thuyết của chương đó.
+- File được lưu tại thư mục `summaries/` với tên theo format: `chapter_<số chương>_<tên chương>.txt` (ví dụ: `summaries/chapter_12_1_rate_limiting.txt`).
+- Nội dung file **CHỈ bao gồm lý thuyết**: các khái niệm, giải thích, lý do tại sao, cách hoạt động — **KHÔNG chứa bất kỳ đoạn code nào**.
+- **ĐẶC BIỆT**: Khuyến khích mô tả cách thức hoạt động bằng sơ đồ luồng (flow) dạng hình vẽ (sử dụng ASCII art trực quan) trong file để dễ lập luận và hình dung.
+- Nội dung phải được viết bằng tiếng Việt, rõ ràng, dễ hiểu như một bản ghi chú học tập.
+- Đây là trường hợp **NGOẠI LỆ DUY NHẤT** được phép dùng `write_to_file` — chỉ để tạo file tóm tắt trong thư mục `summaries/`, không được dùng cho bất kỳ mục đích nào khác.
+
 ---
 *(Bạn có thể thêm các rules tiếp theo vào dưới đây)*
