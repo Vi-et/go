@@ -1,6 +1,6 @@
 module greenlight.example.com
 
-go 1.25
+go 1.25.0
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
@@ -24,6 +24,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 )
 
