@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"greenlight.example.com/internal/data"
 	"greenlight.example.com/internal/jsonlog"
+	"greenlight.example.com/internal/mailer"
 )
 
 // Khai báo hằng số version của ứng dụng
@@ -30,6 +31,13 @@ type config struct {
 		burst   int
 		enabled bool // dùng để bật/tắt rate limiting
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 // Struct application sẽ chứa các phần phụ thuộc mà các handler cần dùng.
@@ -37,6 +45,7 @@ type application struct {
 	config config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
 }
 
 func openDB(cfg config) (*sql.DB, error) {
@@ -87,6 +96,14 @@ func main() {
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiting")
+
+	// smtp
+	flag.StringVar(&cfg.smtp.host, "smtp-host", "smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cfg.smtp.port, "smtp-port", 25, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "882137d06e7d98", "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "0efa52b51f92cb", "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@greenlight.alexedwards.net>", "SMTP sender")
+
 	flag.Parse()
 
 	// Khởi tạo logger
@@ -107,6 +124,7 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
 
 	err = app.serve()

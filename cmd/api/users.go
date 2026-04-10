@@ -54,8 +54,17 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Nếu vạn sự trót lọt, API xuất format JSON mới ra để báo mã 201 Created
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	// Sử dụng helper background để bao bọc anonymous function thực thi nghiệp vụ gửi mail.
+	app.background(func() { 
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user) 
+		if err != nil { 
+			// Lưu ý KHÔNG DÙNG app.serverErrorResponse ở đây nữa! Thay vào đó chỉ ghi log lại:
+			app.logger.PrintError(err, nil) 
+		} 
+	}) 
+
+	// Nếu vạn sự trót lọt, API xuất format JSON mới ra để báo mã 202 Accepted
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

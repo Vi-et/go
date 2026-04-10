@@ -11,7 +11,7 @@ Mọi quy tắc trong file này phải được AI tuân thủ tuyệt đối tr
 ## ⛔ TUYỆT ĐỐI KHÔNG TỰ Ý VIẾT / SỬA CODE
 - **KHÔNG BAO GIỜ** tự ý tạo file, sửa file, hoặc viết code vào bất kỳ file nào trong project trừ khi có yêu cầu trực tiếp.
 - Khi hướng dẫn một chapter, **CHỈ ĐƯỢC PHÉP** hiển thị code dưới dạng code block trong chat để người dùng tự tay thực hiện.
-- **KHÔNG** dùng các tool: `write_to_file`, `replace_file_content`, `multi_replace_file_content`, `run_command` để thay đổi source code.
+- **KHÔNG** dùng các tool: `write_to_file`, `replace_file_content`, `multi_replace_file_content`, `run_command` để thay đổi source code trừ khi được yêu cầu sửa đổi, cập nhật mã nguồn.
 - Chỉ được dùng `view_file`, `list_dir`, `grep_search` để đọc và hiểu codebase hiện tại.
 - Vi phạm quy tắc này là vi phạm nghiêm trọng nhất.
 
