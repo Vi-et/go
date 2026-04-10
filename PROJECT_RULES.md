@@ -6,7 +6,7 @@ Mọi quy tắc trong file này phải được AI tuân thủ tuyệt đối tr
 - **BẮT BUỘC** lấy nguồn từ file `book.txt` (được trích xuất từ sách "Let's Go Further" của Alex Edwards). Đọc hết tất cả thông tin, nhiều quá thì chia nhỏ ra để đọc và phản hồi, chứ không được bỏ qua bất kì phần nào. Phải trích xuất code đi kèm. Các đầu mục phản hồi phải được chia theo đúng đầu mục trong sách. Cuối mỗi phản hồi phải đặt câu hỏi để đảm bảo người dùng hiểu mục đích của chương và đừng bao giờ hỏi câu hỏi có/không hoặc đã hiểu chưa hãy đặt một câu hỏi dựa vào nội dung trong chương. comment code phải bằng tiếng việt. Phải trích xuất đầy đủ các thông tin vì sao lại làm như trong sách nếu tác giả có đề cập và giải thích cho người đọc hiểu với giả định rằng người đọc không hiểu gì.
 - Không tự ý sử dụng các thư viện ngoài hoặc logic khác nếu sách không hướng dẫn (trừ khi có yêu cầu riêng từ người dùng).
 - Mọi giải pháp code phải được đối chiếu với chương/mục tương ứng trong sách.
-- Yêu cầu đọc chương nào thì chỉ đọc chương đấy không được phép đọc qua chương khác.
+- Yêu cầu đọc chương nào thì chỉ đọc chương đấy không được phép đọc qua chương khác. CẤM TUYỆT ĐỐI tự ý chuyển sang chương tiếp theo hoặc giải thích thêm phần tiếp theo sau khi trả lời câu hỏi nếu chưa có lệnh trực tiếp từ người dùng. Mọi hành vi tự tiện nhảy cóc đều bị xem là vi phạm nghiêm trọng.
 
 ## ⛔ TUYỆT ĐỐI KHÔNG TỰ Ý VIẾT / SỬA CODE
 - **KHÔNG BAO GIỜ** tự ý tạo file, sửa file, hoặc viết code vào bất kỳ file nào trong project trừ khi có yêu cầu trực tiếp.

@@ -133,3 +133,42 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 	})
 
 }
+
+func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Lấy thông tin user hiện tại từ context của request
+		user := app.contextGetUser(r)
+
+		// Nếu đây là người dùng ẩn danh (nghĩa là không truyền token hợp lệ)
+		// Gọi helper trả về lỗi 401 và dùng return để chặn request đi tiếp
+		if user.IsAnonymous() {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+
+		// Nếu hợp lệ, gọi handler tiếp theo trong chuỗi
+		next.ServeHTTP(w, r)
+	})
+}
+
+// requireActivatedUser kiểm tra xem người dùng đã được đăng nhập và TÀI KHOẢN ĐÃ KÍCH HOẠT chưa.
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	// Thay vì trả về http.HandlerFunc trực tiếp, chúng ta gán quy trình này cho biến `fn`.
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		// Kiểm tra cờ Activated của user
+		// Nếu user chưa kích hoạt, trả về lỗi 403
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+
+	// Bao bọc `fn` bằng middleware `requireAuthenticatedUser`.
+	// Điều này đồng nghĩa với việc request đi qua `requireAuthenticatedUser` TRƯỚC
+	// sau đó mới đến bước kiểm tra kích hoạt.
+	return app.requireAuthenticatedUser(fn)
+}
