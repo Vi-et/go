@@ -172,3 +172,30 @@ func (app *application) requireActivatedUser(next http.HandlerFunc) http.Handler
 	// sau đó mới đến bước kiểm tra kích hoạt.
 	return app.requireAuthenticatedUser(fn)
 }
+
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		// 1. Lấy thông tin user hiện tại từ context
+		user := app.contextGetUser(r)
+
+		// 2. Gọi CSDL để đem về mảng các quyền của User
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		// 3. Hàm Include() mượn từ chương trước. NẾU MẢNG KHÔNG CÓ MÃ NÀY -> Quăng lỗi 403
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+
+		// Nếu có thì cho đi tiếp
+		next.ServeHTTP(w, r)
+	}
+
+	// Và điều tuyệt vời nhất: ta lại bọc "kiểm tra quyền" bằng "kiểm tra kích hoạt"
+	// -> Luồng bảo vệ 3 tầng hoàn chỉnh được ra đời tự động!
+	return app.requireActivatedUser(fn)
+}
