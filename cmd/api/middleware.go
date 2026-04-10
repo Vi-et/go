@@ -2,13 +2,16 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/felixge/httpsnoop"
 	"golang.org/x/time/rate"
 	"greenlight.example.com/internal/data"
 	"greenlight.example.com/internal/validator"
@@ -240,5 +243,39 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) metrics(next http.Handler) http.Handler {
+	// Khởi tạo các khối biến chứa metrics mới.
+	// Đoạn khai báo này chỉ thiết lập 1 LẦN DUY NHẤT khi middleware chain đan kết vào nhau ở tầng router()
+	totalRequestsReceived := expvar.NewInt("total_requests_received")
+	totalResponsesSent := expvar.NewInt("total_responses_sent")
+	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_μs")
+	totalResponsesSentByStatus := expvar.NewMap("total_responses_sent_by_status")
+
+	// Khối closure (hàm nặc danh) bên dưới sẽ được kích hoạt CÙNG VỚI MỖI Request bay tới API...
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Bấm đồng hồ để chốt mốc thời gian bắt đầu vào rà soát.
+		start := time.Now()
+
+		// Dùng phương thức Add() tích hợp sẵn của sinh mạng expvar để nâng biến tổng request thêm 1.
+		totalRequestsReceived.Add(1)
+
+		// Đẩy quả bóng request cho chặng đường handler kế tiếp chạy đi
+		next.ServeHTTP(w, r)
+
+		// Lượt quay gót quay về (sau khi handler tiếp theo ở phía trong đã xử lý xong và gói ghém gửi phản hồi)...
+		// Mình tăng biến đếm số lượng response hoàn tất lên 1 đơn vị.
+		totalResponsesSent.Add(1)
+
+		// Cập nhật: Dùng time.Since(start) cho ngắn gọn và chuẩn Go thay vì time.Now().Sub(start)
+		duration := time.Since(start).Microseconds()
+		totalProcessingTimeMicroseconds.Add(duration)
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
+
+		totalProcessingTimeMicroseconds.Add(metrics.Duration.Microseconds())
+		totalResponsesSentByStatus.Add(strconv.Itoa(metrics.Code), 1)
+
 	})
 }

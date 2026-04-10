@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -128,6 +130,21 @@ func main() {
 	// Đảm bảo rằng kết nối sẽ được đóng khi hàm main đóng.
 	defer db.Close()
 	logger.PrintInfo("database connection pool established", nil)
+
+	// Publish phiên bản hiện tại ("version") tĩnh dưới dạng chuỗi chữ
+	expvar.NewString("version").Set(version)
+	// Publish số lượng goroutines đang chạy rầm rộ lúc này
+	expvar.Publish("goroutines", expvar.Func(func() interface{} {
+		return runtime.NumGoroutine()
+	}))
+	// Publish số liệu thống kê realtime về tình trạng connection pool của database
+	expvar.Publish("database", expvar.Func(func() interface{} {
+		return db.Stats()
+	}))
+	// Publish mã Unix timestamp để dễ check thời gian phản hồi server
+	expvar.Publish("timestamp", expvar.Func(func() interface{} {
+		return time.Now().Unix()
+	}))
 
 	// Khởi tạo application
 	app := &application{
