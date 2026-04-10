@@ -207,3 +207,11 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 
 	return &user, nil
 }
+
+var AnonymousUser = &User{}
+
+// ... (phần code struct User cũ giữ nguyên)
+// Thêm hàm IsAnonymous để nhận diện User instance có phải là Anonymous không
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
