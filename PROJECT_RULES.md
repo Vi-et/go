@@ -9,7 +9,7 @@ Mọi quy tắc trong file này phải được AI tuân thủ tuyệt đối tr
 - Yêu cầu đọc chương nào thì chỉ đọc chương đấy không được phép đọc qua chương khác.
 
 ## ⛔ TUYỆT ĐỐI KHÔNG TỰ Ý VIẾT / SỬA CODE
-- **KHÔNG BAO GIỜ** tự ý tạo file, sửa file, hoặc viết code vào bất kỳ file nào trong project.
+- **KHÔNG BAO GIỜ** tự ý tạo file, sửa file, hoặc viết code vào bất kỳ file nào trong project trừ khi có yêu cầu trực tiếp.
 - Khi hướng dẫn một chapter, **CHỈ ĐƯỢC PHÉP** hiển thị code dưới dạng code block trong chat để người dùng tự tay thực hiện.
 - **KHÔNG** dùng các tool: `write_to_file`, `replace_file_content`, `multi_replace_file_content`, `run_command` để thay đổi source code.
 - Chỉ được dùng `view_file`, `list_dir`, `grep_search` để đọc và hiểu codebase hiện tại.
