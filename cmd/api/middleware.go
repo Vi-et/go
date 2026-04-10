@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
+	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -28,13 +31,56 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 }
 
 func (app *application) rateLimit(next http.Handler) http.Handler {
-	limiter := rate.NewLimiter(2, 4)
-
+	// Định nghĩa struct client lưu limiter và thời điểm truy cập cuối.
+	type client struct {
+		limiter  *rate.Limiter
+		lastSeen time.Time
+	}
+	var (
+		mu sync.Mutex
+		// Map giờ trỏ đến con trỏ *client thay vì *rate.Limiter trực tiếp.
+		clients = make(map[string]*client)
+	)
+	// Chạy goroutine nền dọn dẹp các client không còn hoạt động.
+	// Goroutine này được khởi tạo 1 lần duy nhất khi middleware được wrap.
+	go func() {
+		for {
+			time.Sleep(time.Minute) // Nghỉ 1 phút rồi mới dọn
+			// Lock để ngăn các request kiểm tra limiter trong lúc đang dọn.
+			mu.Lock()
+			// Xóa mọi client không được thấy trong 3 phút trở lại.
+			for ip, client := range clients {
+				if time.Since(client.lastSeen) > 3*time.Minute {
+					delete(clients, ip)
+				}
+			}
+			mu.Unlock()
+		}
+	}()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !limiter.Allow() {
+		if !app.config.limiter.enabled {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+		mu.Lock()
+		if _, found := clients[ip]; !found {
+			// Khởi tạo client mới với rate limiter gắn vào.
+			clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst)}
+		}
+		// Cập nhật thời điểm truy cập cuối cho IP này.
+		clients[ip].lastSeen = time.Now()
+		if !clients[ip].limiter.Allow() {
+			mu.Unlock()
 			app.rateLimitExceededResponse(w, r)
 			return
 		}
+		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }

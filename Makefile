@@ -31,3 +31,11 @@ db/migrations/up:
 db/migrations/down:
 	@echo 'Đang chạy các migration down...'
 	migrate -path ./migrations -database ${GREENLIGHT_DB_DSN} down
+
+## dev: chạy ứng dụng bằng air và truyền tham số từ .env
+.PHONY: dev
+dev:
+	@go tool air -- -db-dsn=${GREENLIGHT_DB_DSN} \
+		-limiter-rps=${LIMITER_RPS} \
+		-limiter-burst=${LIMITER_BURST} \
+		-limiter-enabled=${LIMITER_ENABLED}
