@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"slices"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Định nghĩa Permissions dưới dạng một mảng (slice) các chuỗi, ví dụ:
@@ -60,4 +62,20 @@ func (m PermissionModel) GetAllForUser(userID int64) (Permissions, error) {
 	}
 
 	return permissions, nil
+}
+
+func (m PermissionModel) AddForUser(userID int64, codes ...string) error {
+	// Tác giả dùng cú pháp gộp INSERT và SELECT (kết hợp với 'ANY($2)')
+	// Quá trình này sẽ biến mảng truyền vào thành các query song song.
+	query := `
+        INSERT INTO users_permissions 
+        SELECT $1, permissions.id FROM permissions WHERE permissions.code = ANY($2)`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Chúng ta dùng hàm pq.Array() của thư viện lib/pq để Go biết cách parse
+	// mảng slice thành mảng định dạng text của Postgres
+	_, err := m.DB.ExecContext(ctx, query, userID, pq.Array(codes))
+	return err
 }
