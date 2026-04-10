@@ -199,3 +199,32 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 	// -> Luồng bảo vệ 3 tầng hoàn chỉnh được ra đời tự động!
 	return app.requireActivatedUser(fn)
 }
+
+// Thêm hàm rẽ nhánh này vào dưới cùng hoặc đâu đó trong file
+func (app *application) enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// PHẢI CÓ: Thêm "Vary: Origin" để nhắc cho anh em Cache (Local, CDN)
+		// biết rằng: Dữ liệu tôi gửi ra cho anh có nguy cơ TÙY BIẾN
+		// dựa theo Header 'Origin' lúc anh truyền vào.
+		// Đừng lấy bừa một bản Cache này ném cho thằng không đúng nguồn gốc!
+		w.Header().Add("Vary", "Origin")
+
+		// Trích lấy giá trị header Origin do web browser tự gửi theo
+		origin := r.Header.Get("Origin")
+
+		// Kiểm tra xem Origin được gắn kèm có trống không,
+		// VÀ danh sách Trắng của ta có mở ít nhất 1 Origin nào cho rẽ vào không.
+		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
+			// Lặp qua vòng lặp check.
+			for i := range app.config.cors.trustedOrigins {
+				if origin == app.config.cors.trustedOrigins[i] {
+					// Lắp đúng tên nó vào cửa ra! Mở bát!
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					break // Thoát sớm nếu đã tìm thấy
+				}
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
