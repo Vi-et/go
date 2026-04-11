@@ -3,3 +3,5 @@
 .env
 tmpbin/
 bin/
+config.yaml
+config.*.yaml

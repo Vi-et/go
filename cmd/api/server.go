@@ -14,7 +14,7 @@ import (
 func (app *application) serve() error {
 	// Khởi tạo HTTP server với các cài đặt giống như trong main() cũ
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.config.port),
+		Addr:         fmt.Sprintf(":%d", app.config.Port),
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
@@ -57,7 +57,7 @@ func (app *application) serve() error {
 	// Log thông báo "đang khởi động server"
 	app.logger.PrintInfo("starting server", map[string]string{
 		"addr": srv.Addr,
-		"env":  app.config.env,
+		"env":  app.config.Env,
 	})
 
 	err := srv.ListenAndServe()

@@ -65,7 +65,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 		}
 	}()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !app.config.limiter.enabled {
+		if !app.config.Limiter.Enabled {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -78,7 +78,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 		mu.Lock()
 		if _, found := clients[ip]; !found {
 			// Khởi tạo client mới với rate limiter gắn vào.
-			clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst)}
+			clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(app.config.Limiter.RPS), app.config.Limiter.Burst)}
 		}
 		// Cập nhật thời điểm truy cập cuối cho IP này.
 		clients[ip].lastSeen = time.Now()
@@ -214,9 +214,9 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 
 		origin := r.Header.Get("Origin")
 
-		if origin != "" && len(app.config.cors.trustedOrigins) != 0 {
-			for i := range app.config.cors.trustedOrigins {
-				if origin == app.config.cors.trustedOrigins[i] {
+		if origin != "" && len(app.config.CORS.TrustedOrigins) != 0 {
+			for i := range app.config.CORS.TrustedOrigins {
+				if origin == app.config.CORS.TrustedOrigins[i] {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 
 					// BẪY LÕNG PREFLIGHT
