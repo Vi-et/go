@@ -3,33 +3,39 @@ module greenlight.example.com
 go 1.25.0
 
 require (
+	github.com/felixge/httpsnoop v1.0.1
+	github.com/go-mail/mail/v2 v2.3.0
+	github.com/julienschmidt/httprouter v1.3.0
+	github.com/lib/pq v1.10.0
+	golang.org/x/crypto v0.50.0
+	golang.org/x/time v0.15.0
+)
+
+require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/air-verse/air v1.52.3 // indirect
-	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/bep/godartsass v1.2.0 // indirect
 	github.com/bep/godartsass/v2 v2.5.0 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
+	github.com/cli/safeexec v1.0.1 // indirect
+	github.com/creack/pty v1.1.21 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/go-mail/mail/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gohugoio/hugo v0.130.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/julienschmidt/httprouter v1.3.0 // indirect
-	github.com/lib/pq v1.10.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mitchellh/hashstructure v1.1.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/mail.v2 v2.3.1 // indirect
 )
 
 tool github.com/air-verse/air
