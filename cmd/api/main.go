@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -18,7 +19,10 @@ import (
 )
 
 // Khai báo hằng số version của ứng dụng
-const version = "1.0.0"
+var (
+	version   string
+	buildTime string
+)
 
 // Struct config chứa các thiết lập cấu hình. Hiện tại mới chỉ có port và env.
 type config struct {
@@ -116,7 +120,15 @@ func main() {
 		cfg.cors.trustedOrigins = strings.Fields(val)
 		return nil
 	})
+
+	displayVersion := flag.Bool("version", false, "Display version and exit")
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version: %s\n", version)
+		fmt.Printf("Build Time: %s\n", buildTime)
+		os.Exit(0)
+	}
 
 	// Khởi tạo logger
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)

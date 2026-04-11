@@ -1,4 +1,5 @@
 *.pdf
 *.txt
 .env
-tmp
+tmpbin/
+bin/
